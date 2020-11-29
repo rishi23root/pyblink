@@ -6,6 +6,7 @@ from threading import Thread
 import csv
 from time import sleep as nap , time
 import random
+import argparse
 
 # wrapper
 def in_thread(func):
@@ -173,45 +174,6 @@ class blink:
                 print(f'program run for last {round(time() - self.run_time)} seconds sufficiant data collected 😉')
                 break 
 
-    # #############################
-    def bg_blink_collector(self) :
-        while True:
-            _,img = self.cam.read()
-            coordinates = self.face_coordinates(img)
-
-            # work on only one face 
-            if len(coordinates) == 1 :
-                print('face')
-                # ploting the cordinates if there is only one face is there
-                x,y,w,h = coordinates[0]
-                # cut the image only face to ninimise the processing 
-                just_face = img[y:y+h,x:x+w]
-                # detect eye possitions
-                eye = self.eye_cascade.detectMultiScale(just_face,1.3,5)
-                
-                if len(eye) == 2:
-                    for _ in eye:
-                        # because eye is in face then the possiton can be face + eye_relative to face 
-                        self.eye_in_last_frame = True
-                else:
-                    # if less or no eye found then consider it closed
-                    print('eye not found')
-                    if self.eye_in_last_frame:
-                        self.blink_count += 1
-                        self.eye_in_last_frame = False
-            
-            else:
-                self.save_data(self.time_spent,self.blink_count)
-                
-                self.data_saved  = True                
-                # if no person or nore then 1 preson found -> sleep and restart the clock  
-                if not self.debug:
-                    nap(0.3)
-                self.start = time()
-                self.blink_count = 0
-    
-    # #############################
-
     def bg_thread(self):
         # run the Thread for bg blink collecter
         blink_time,blinks = [],[]   
@@ -252,7 +214,7 @@ class blink:
     # there is 3 versions
     @classmethod
     def once(cls):
-        # 1. run of only 20 min to check your eye status once only
+        # 1. run of only 2 min to check your eye status once only
         print('Running for the 2 min to test the average blink time')
         with cls() as blink:
             # this will run in background and collect data 
@@ -287,8 +249,22 @@ class blink:
 
 
 if __name__ == '__main__':
-    # blink.debuging()
-    blink.bg()
-
-
-
+    # commend line arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-o','--once',action="store_true" ,help = "run the program in background for only 2 mins and show results")
+    parser.add_argument('-d','--debug',action="store_true" ,help = "run the program in with gui to check the realtime actions")
+    parser.add_argument('-b','--background ',action="store_true" ,help = "run the program in background and keep notify you with 20 min intervals if your blink is not proper")   
+    args = parser.parse_args()
+    print('Good quality camera gives more accurate results\n')
+    if args.debug :
+        # python blink.py -d
+        print('Running the debug/gui mode')
+        blink.debuging()
+    elif args.once:
+        # python blink.py -o
+        print('Running the once mode for 2 mins')
+        blink.once()
+    else:
+        # python blink.py -b
+        print('Running the background version \n')
+        blink.bg()    
