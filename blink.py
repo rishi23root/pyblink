@@ -171,8 +171,9 @@ class blink:
                     break
             
             # close the program after self.time_limit if running in background
-            if (time() - self.run_time) >= self.time_limit and (not self.debug ) and (not self.run_from_bg_function) : 
+            if ((time() - self.run_time) >= self.time_limit) and (not self.debug ) and (not self.run_from_bg_function) : 
                 # break the program if it runs more then 20 min 
+                # print(not self.run_from_bg_function)
                 print(f'program run for last {round(time() - self.run_time)} seconds sufficiant data collected 😉')
                 break 
 
@@ -217,8 +218,7 @@ class blink:
                     # user blink 1 in 5 secs then just sleep for next 1 min and clear previous data 
                     blink_time,blinks = [],[]
                     nap(1) # sleeping for next 1 min here and come with clean slate`
-
-                            
+       
     # there is 3 versions
     @classmethod
     def once(cls):
@@ -245,15 +245,14 @@ class blink:
         # your camera should be of good quality for acurate results
         try:
             with cls(debug=debug) as blink:
-                cls.kill_thread = False
-                cls.run_from_bg_function = True
-                Thread(target=blink.bg_thread ,daemon=True).start()
+                blink.kill_thread = False
+                blink.run_from_bg_function = True
+                Thread(target=blink.bg_thread).start()
                 blink.blink_collector()
 
         except KeyboardInterrupt:
-            cls.kill_thread = True
+            blink.kill_thread = True
             print('Program Forced stoped 😗')
-
 
 
 if __name__ == '__main__':
