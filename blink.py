@@ -88,7 +88,9 @@ class blink:
     @in_thread
     def show_notification(self,message,title='Blinker',icon_path = 'eye.ico',duration = 10 ):
         toaster = ToastNotifier()
-        toaster.show_toast(title,message,icon_path = icon_path ,duration=duration)
+        # some error in  ToastNotifier code 
+        try : toaster.show_toast(title,message,icon_path = icon_path ,duration=duration)
+        except : pass
 
     @property
     def time_spent(self):
@@ -179,7 +181,8 @@ class blink:
         blink_time,blinks = [],[]   
         last_notification_sent_time = time()
         min_interval_in_each_notification = 20*60   # notification after every 20 mins
-        self.show_notification(f'Stating Blink Recording...')
+        self.show_notification(f'Stating Blink Recording in 3 sec')
+        nap(3)
 
         # collect all time spent and blink_count 
         while not self.kill_thread :
@@ -198,17 +201,22 @@ class blink:
             # taking actions for the program
             # take actions - send notification to the user 
             if sum(blink_time) >= 5 :
-                # if sum the blink is 0 in last 5s and prevent to send notification again and again
+                # if sum of blink time is 5 sec
                 if ( sum(blinks) == 0 ) and (time() - last_notification_sent_time >= min_interval_in_each_notification ):
+                    # if sum of blinks is 0 in last 5s and prevent to send notification repeatedly
+                    # this indent will run only with min intervals of 'min_interval_in_each_notification'
                     self.show_notification(f'Blink, You didn\'t blink for about last {round(sum(blink_time))} seconds\nAlso stretch and straight your posture')
-                    # update last_notification_sent_time value to current time of notification send  
-                    last_notification_sent_time = time()
+                    last_notification_sent_time = time()    # update last_notification_sent_time value to current time of notification send
                     # sleep for next 15 mins to save some processing power
-                    print('user notified sleep for next 15 min')
-                    nap(15*60)
+                    print(f'user notified blinks - {sum(blinks)} in last {round(sum(blink_time))}sec sleep for next 10 min')
+                    blink_time,blinks = [],[]
+                    nap(10*60)
 
-            # for testing
-            # print(round(sum(blink_time)),sum(blinks),end='\n\n')
+                elif ( sum(blinks) > 0 ) and (time() - last_notification_sent_time >= min_interval_in_each_notification ):
+                    print(f'user working properly blinks - {sum(blinks)} in last {round(sum(blink_time))}sec')
+                    # user blink 1 in 5 secs then just sleep for next 1 min and clear previous data 
+                    blink_time,blinks = [],[]
+                    nap(1) # sleeping for next 1 min here and come with clean slate`
 
                             
     # there is 3 versions
@@ -231,15 +239,15 @@ class blink:
             blink.blink_collector()
         
     @classmethod
-    def bg(cls):
+    def bg(cls,debug=False):
         # 3. run in background for ever until you stop it by [ctrl+c]
         '''bg will run you program in background and notify you ragularly in intervals'''    
         # your camera should be of good quality for acurate results
         try:
-            with cls() as blink:
+            with cls(debug=debug) as blink:
                 cls.kill_thread = False
                 cls.run_from_bg_function = True
-                Thread(target=blink.bg_thread).start()
+                Thread(target=blink.bg_thread ,daemon=True).start()
                 blink.blink_collector()
 
         except KeyboardInterrupt:
@@ -253,18 +261,20 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-o','--once',action="store_true" ,help = "run the program in background for only 2 mins and show results")
     parser.add_argument('-d','--debug',action="store_true" ,help = "run the program in with gui to check the realtime actions")
-    parser.add_argument('-b','--background ',action="store_true" ,help = "run the program in background and keep notify you with 20 min intervals if your blink is not proper")   
+    parser.add_argument('-b','--background',action="store_true" ,help = "run the program in background and keep notify you with 20 min intervals if your blink is not proper")   
     args = parser.parse_args()
     print('Good quality camera gives more accurate results\n')
-    if args.debug :
-        # python blink.py -d
-        print('Running the debug/gui mode')
-        blink.debuging()
-    elif args.once:
+
+    if args.once:
         # python blink.py -o
         print('Running the once mode for 2 mins')
         blink.once()
-    else:
+    elif args.background :
         # python blink.py -b
+        # python blink.py -b -d
         print('Running the background version \n')
-        blink.bg()    
+        blink.bg(args.debug)
+    elif args.debug:
+        # python blink.py -d
+        print('Running the debug/gui mode')
+        blink.debuging()  
