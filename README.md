@@ -6,7 +6,7 @@ That can be super painful in the long-term so the use of this program can help y
 The program count the blinks of the user and notify user of his status.
 and all the data will save in csv file in chunks add all blinks data and divide with sum of time then multiply with 60 to get the average time of the user  
 
-### use of good camera gives better and more accurate results 
+`Note`: good camera provide better and more accurate results 
 
 
 ## Steps for setup the program 🔨
@@ -43,7 +43,8 @@ optional arguments:
 
 <img src='https://github.com/rishabhjainfinal/pyblink/blob/main/ss.png'>
 
-----
+
+## Additional
 **If notifications are not working then try these :**
   1. `python -m pip install setuptools --upgrade`
   2. problem in notification - [link to Stack-Overflow page](https://stackoverflow.com/questions/45755475/why-is-this-simple-python-toast-notification-not-working)
